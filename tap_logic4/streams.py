@@ -730,6 +730,47 @@ class BuyOrdersRowsStream(Logic4Stream):
         return None
 
 
+class BuyOrderDeliveriesStream(Logic4Stream):
+    """Define custom stream for buy order deliveries."""
+
+    name = "buy_order_deliveries"
+    path = "/v1/BuyOrderDeliveries/GetBuyOrderDeliveries"
+    primary_keys = ["BuyOrderDeliveryId"]
+    replication_key = "DateTimeCreated"
+    rep_key_field = "CreationDateFrom"
+
+    schema = th.PropertiesList(
+        th.Property("BuyOrderDeliveryId", th.IntegerType),
+        th.Property("DateTimeCreated", th.DateTimeType),
+        th.Property("DateTimeProcessed", th.DateTimeType),
+        th.Property("StatusId", th.IntegerType),
+        th.Property("TypeId", th.IntegerType),
+        th.Property("SupplierId", th.IntegerType),
+        th.Property("BuyOrderId", th.IntegerType),
+        th.Property("Remarks", th.StringType),
+        th.Property("Description", th.StringType),
+        th.Property("BranchId", th.IntegerType),
+        th.Property("PickingListNumber", th.StringType),
+        th.Property("Rows", th.ArrayType(
+            th.ObjectType(
+                th.Property("BuyPrice", th.NumberType),
+                th.Property("Id", th.IntegerType),
+                th.Property("ProductCode", th.StringType),
+                th.Property("VendorCode", th.StringType),
+                th.Property("ProductCodeSupplier", th.StringType),
+                th.Property("BuyOrderRowId", th.IntegerType),
+                th.Property("DebtorName", th.StringType),
+                th.Property("OrderId", th.IntegerType),
+                th.Property("ProductId", th.IntegerType),
+                th.Property("Qty_Delivered", th.NumberType),
+                th.Property("Remarks", th.StringType),
+                th.Property("StockLocationId", th.IntegerType),
+                th.Property("AmountOfLabelsToPrint", th.IntegerType),
+            )
+        )),
+    ).to_dict()
+
+
 class SuppliersStream(Logic4Stream):
     """Define custom stream."""
 
