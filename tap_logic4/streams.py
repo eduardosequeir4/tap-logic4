@@ -780,10 +780,9 @@ class BuyOrderDeliveriesStream(Logic4Stream):
         start_date = (
             start_date.strftime("%Y-%m-%dT%H:%M:%SZ") if start_date else start_date
         )
-        now = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime("%Y-%m-%dT%H:%M:%S")
         payload = {}
         payload["Take"] = self.page_size
-        if start_date and self.replication_key and self.rep_key_field:
+        if start_date:
             payload[self.rep_key_field] = start_date
         if next_page_token:
             payload["Skip"] = next_page_token
