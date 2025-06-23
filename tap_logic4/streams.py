@@ -5,6 +5,7 @@ from singer_sdk import typing as th
 from tap_logic4.client import Logic4Stream
 import datetime 
 import pytz
+from datetime import timedelta
 
 address_type = th.ObjectType(
     th.Property(
@@ -738,6 +739,7 @@ class BuyOrderDeliveriesStream(Logic4Stream):
     primary_keys = ["BuyOrderDeliveryId"]
     replication_key = "DateTimeCreated"
     rep_key_field = "CreationDateFrom"
+    page_size = 1000
 
     schema = th.PropertiesList(
         th.Property("BuyOrderDeliveryId", th.IntegerType),
@@ -769,6 +771,33 @@ class BuyOrderDeliveriesStream(Logic4Stream):
             )
         )),
     ).to_dict()
+
+    def prepare_request_payload(self, context, next_page_token):
+        #NOTE: Logic4 uses Amsterdam timezone
+        start_date = self.get_starting_time(context)
+        if self.stream_state.get("replication_key_value"):
+            start_date = start_date + timedelta(seconds=1)
+        start_date = (
+            start_date.strftime("%Y-%m-%dT%H:%M:%SZ") if start_date else start_date
+        )
+        now = datetime.datetime.now(pytz.timezone('Europe/Amsterdam')).strftime("%Y-%m-%dT%H:%M:%S")
+        payload = {}
+        payload["Take"] = self.page_size
+        if start_date and self.replication_key and self.rep_key_field:
+            payload[self.rep_key_field] = start_date
+        if next_page_token:
+            payload["Skip"] = next_page_token
+        self.logger.info(f"Making request to '{self.path}' with payload: {payload}")
+        return payload
+
+    def get_next_page_token(self, response, previous_token):
+        """Return a token for identifying next page or None if no more pages."""
+        counter = response.json().get("RecordsCounter")
+        if counter:
+            previous_token = previous_token or 0
+            next_page_token = previous_token + counter
+            return next_page_token
+        return None
 
 
 class SuppliersStream(Logic4Stream):
